@@ -1,8 +1,15 @@
 import { AppError, assertAppError } from "./errors.js";
 
-export async function readJson(req) {
+export async function readJson(req, maxBytes = 1024 * 1024) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let totalBytes = 0;
+  for await (const chunk of req) {
+    totalBytes += chunk.length;
+    if (totalBytes > maxBytes) {
+      throw new AppError(413, "payload_too_large", "Request body is too large.");
+    }
+    chunks.push(chunk);
+  }
   const raw = Buffer.concat(chunks).toString("utf8");
   if (!raw) return {};
   try {

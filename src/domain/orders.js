@@ -4,7 +4,7 @@ import { centsToAmount, parseAmountToCents } from "../lib/money.js";
 import { validateWebhookUrl } from "../lib/security.js";
 
 const TERMINAL_STATUSES = new Set(["CANCELLED", "EXPIRED", "WEBHOOK_DELIVERED"]);
-const PAID_STATUSES = new Set(["PAID_MANUAL_CONFIRMED", "WEBHOOK_DELIVERED", "WEBHOOK_FAILED"]);
+const PAID_STATUSES = new Set(["PAID_MANUAL_CONFIRMED", "WEBHOOK_DELIVERED"]);
 
 function nowIso() {
   return new Date().toISOString();
@@ -118,6 +118,7 @@ export class OrderService {
     const updatedOrder = await this.store.update((data) => {
       const order = data.orders.find((item) => item.id === id || item.orderNo === id);
       if (!order) throw new AppError(404, "order_not_found", "Order not found.");
+      if (order.status === "WEBHOOK_FAILED") return publicOrder(order);
       if (PAID_STATUSES.has(order.status)) return publicOrder(order);
       if (TERMINAL_STATUSES.has(order.status)) {
         throw new AppError(409, "invalid_order_state", `Cannot confirm order from ${order.status}.`);

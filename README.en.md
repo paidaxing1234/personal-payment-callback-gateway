@@ -35,6 +35,7 @@ Default endpoints:
 - Compliance boundary: http://127.0.0.1:8787/api/compliance
 
 All manual confirmation, cancellation, and audit APIs require a strong random `ADMIN_TOKEN`. Production deployments must also use a strong random `WEBHOOK_SECRET` and expose the service only behind HTTPS.
+Order creation and read APIs require a strong random `MERCHANT_TOKEN`; do not expose the merchant API as an unauthenticated public endpoint.
 
 ## Webhook Signature
 

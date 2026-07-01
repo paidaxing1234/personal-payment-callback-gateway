@@ -39,12 +39,16 @@
         </form>
 
         <form id="adminForm" class="panel">
-          <h2>管理员</h2>
+          <h2>访问令牌</h2>
+          <label>
+            Merchant Token
+            <input id="merchantToken" type="password" placeholder="Merchant Bearer token" />
+          </label>
           <label>
             Admin Token
             <input id="adminToken" type="password" placeholder="Authorization Bearer token" />
           </label>
-          <p class="muted">确认、取消、审计查询需要管理员 token。</p>
+          <p class="muted">创建和查看订单需要 merchant token；确认、取消和审计查询需要 admin token。</p>
         </form>
       </section>
 

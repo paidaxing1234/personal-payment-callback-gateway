@@ -33,6 +33,7 @@ WEBHOOK_FAILED -> WEBHOOK_DELIVERED
 
 ## 安全策略
 
+- 商户下单和查询使用 `MERCHANT_TOKEN`。
 - 管理操作使用 `ADMIN_TOKEN`。
 - 模拟 provider 使用 `SIMULATE_PROVIDER_TOKEN`。
 - Webhook 使用 HMAC-SHA256 签名。

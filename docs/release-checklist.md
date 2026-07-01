@@ -1,6 +1,7 @@
 # 发布检查清单
 
 - [ ] `.env`、真实 token、真实二维码、真实收款账号未提交。
+- [ ] 生产环境未使用 `.env.example` 里的占位 token。
 - [ ] `npm test` 通过。
 - [ ] `npm run check` 通过。
 - [ ] `npm run security:scan` 通过。

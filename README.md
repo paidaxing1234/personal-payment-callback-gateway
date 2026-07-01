@@ -13,6 +13,7 @@
 - 模拟 provider 通知，用于本地开发和商户 Webhook 联调。
 - 对外发送 HMAC-SHA256 签名 Webhook，支持幂等键和投递记录。
 - 提供最小管理页面、REST API、合规说明和测试。
+- 采用类似支付网关的 `MERCHANT_TOKEN` / `ADMIN_TOKEN` 双令牌边界。
 
 ## 不能做什么
 
@@ -36,6 +37,7 @@ npm start
 - 合规边界：http://127.0.0.1:8787/api/compliance
 
 所有人工确认、取消和审计查询都必须设置强随机 `ADMIN_TOKEN`；生产环境还必须设置强随机 `WEBHOOK_SECRET`，并通过 HTTPS 暴露服务。
+创建和读取订单 API 需要设置强随机 `MERCHANT_TOKEN`，不要把下单接口暴露成无鉴权公开接口。
 
 ## API 摘要
 
@@ -43,6 +45,7 @@ npm start
 
 ```bash
 curl -X POST http://127.0.0.1:8787/api/orders \
+  -H "Authorization: Bearer <MERCHANT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d "{\"amount\":\"9.90\",\"subject\":\"测试订单\",\"webhookUrl\":\"https://example.com/webhook\"}"
 ```
@@ -88,6 +91,8 @@ HMAC_SHA256(WEBHOOK_SECRET, timestamp + "." + nonce + "." + rawBody)
 支付宝官方异步通知来自商家调用支付接口时传入的 `notify_url`，例如 `alipay.trade.precreate`。如果需要真实自动支付回调，应申请并签约支付宝开放平台支付产品，并在服务端验签异步通知、主动查询订单、下载账单对账。
 
 个人收款码模式建议只用于本人低频、面对面场景的人工确认；如果具有明显经营活动特征，应按监管和平台要求使用经营/商家收款码或官方商户支付产品。
+
+第三方网关例如迅虎支付/虎皮椒的公开文档展示的是“平台开户、商户下单、平台回调商户 `notify_url`”模式，不等同于普通个人静态收款码自带官方回调。详见 [docs/xunhupay-model.md](./docs/xunhupay-model.md)。
 
 ## 开发命令
 

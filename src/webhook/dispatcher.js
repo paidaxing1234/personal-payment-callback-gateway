@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { newId } from "../lib/id.js";
+import { assertWebhookUrlResolvesPublic } from "../lib/security.js";
 import { signWebhookBody } from "./signature.js";
 
 export class WebhookDispatcher {
@@ -31,6 +32,7 @@ export class WebhookDispatcher {
   async dispatch(order, eventType) {
     const targetUrl = order.webhookUrl || this.config.defaultWebhookUrl;
     if (!targetUrl) return null;
+    await assertWebhookUrlResolvesPublic(targetUrl, this.config.allowPrivateWebhooks);
 
     const event = this.buildEvent(order, eventType);
     const rawBody = JSON.stringify(event);
@@ -65,6 +67,7 @@ export class WebhookDispatcher {
           "X-Callback-Signature": signature
         },
         body: rawBody,
+        redirect: "manual",
         signal: AbortSignal.timeout(8000)
       });
 

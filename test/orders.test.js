@@ -49,6 +49,7 @@ before(async () => {
     NODE_ENV: "test",
     DATA_FILE: path.join(os.tmpdir(), `pcg-test-${Date.now()}.json`),
     ADMIN_TOKEN: "admin-test-token",
+    MERCHANT_TOKEN: "merchant-test-token",
     WEBHOOK_SECRET: "test-webhook-secret",
     SIMULATE_PROVIDER_TOKEN: "simulate-test-token",
     ALLOW_PRIVATE_WEBHOOKS: "true"
@@ -64,6 +65,7 @@ after(async () => {
 test("creates an order and confirms it with signed webhook delivery", async () => {
   const create = await request("/api/orders", {
     method: "POST",
+    headers: { Authorization: "Bearer merchant-test-token" },
     body: JSON.stringify({ amount: "12.34", subject: "Node test order", webhookUrl })
   });
   assert.equal(create.response.status, 201);
@@ -94,24 +96,35 @@ test("rejects private webhook URLs unless explicitly enabled", async () => {
     NODE_ENV: "test",
     DATA_FILE: path.join(os.tmpdir(), `pcg-private-test-${Date.now()}.json`),
     ADMIN_TOKEN: "admin-test-token",
+    MERCHANT_TOKEN: "merchant-test-token",
     WEBHOOK_SECRET: "test-webhook-secret",
     ALLOW_PRIVATE_WEBHOOKS: "false"
   });
   const isolatedBase = await listen(isolated);
   const response = await fetch(`${isolatedBase}/api/orders`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: "Bearer merchant-test-token" },
     body: JSON.stringify({ amount: "1.00", subject: "Blocked", webhookUrl: "http://127.0.0.1:9/hook" })
   });
   const body = await response.json();
   assert.equal(response.status, 400);
   assert.equal(body.error.code, "private_webhook_url_blocked");
+
+  const ipv6Response = await fetch(`${isolatedBase}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer merchant-test-token" },
+    body: JSON.stringify({ amount: "1.00", subject: "Blocked IPv6", webhookUrl: "http://[::1]:9/hook" })
+  });
+  const ipv6Body = await ipv6Response.json();
+  assert.equal(ipv6Response.status, 400);
+  assert.equal(ipv6Body.error.code, "private_webhook_url_blocked");
   await new Promise((resolve) => isolated.close(resolve));
 });
 
 test("simulate provider endpoint requires its own token", async () => {
   const create = await request("/api/orders", {
     method: "POST",
+    headers: { Authorization: "Bearer merchant-test-token" },
     body: JSON.stringify({ amount: "3.00", subject: "Simulate" })
   });
 

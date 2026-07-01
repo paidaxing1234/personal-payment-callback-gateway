@@ -37,12 +37,13 @@ export class JsonStore {
   }
 
   async update(mutator) {
-    this.queue = this.queue.then(async () => {
+    const next = this.queue.then(async () => {
       const data = await this.read();
       const result = await mutator(data);
       await this.write(data);
       return result;
     });
-    return this.queue;
+    this.queue = next.catch(() => undefined);
+    return next;
   }
 }
