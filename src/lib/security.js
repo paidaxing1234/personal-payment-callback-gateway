@@ -57,10 +57,9 @@ export function requireBearer(req, expectedToken, name) {
 }
 
 export function requireAdmin(req, config) {
-  if (!config.adminToken && config.isProduction) {
-    throw new AppError(403, "admin_token_required", "ADMIN_TOKEN must be configured in production.");
+  if (!config.adminToken) {
+    throw new AppError(403, "admin_token_required", "ADMIN_TOKEN must be configured for admin operations.");
   }
 
-  if (!config.adminToken) return;
   requireBearer(req, config.adminToken, "ADMIN_TOKEN");
 }

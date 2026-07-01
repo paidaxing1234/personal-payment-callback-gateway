@@ -34,7 +34,7 @@ Default endpoints:
 - Health check: http://127.0.0.1:8787/health
 - Compliance boundary: http://127.0.0.1:8787/api/compliance
 
-Use strong random `ADMIN_TOKEN` and `WEBHOOK_SECRET` values in production, and expose the service only behind HTTPS.
+All manual confirmation, cancellation, and audit APIs require a strong random `ADMIN_TOKEN`. Production deployments must also use a strong random `WEBHOOK_SECRET` and expose the service only behind HTTPS.
 
 ## Webhook Signature
 

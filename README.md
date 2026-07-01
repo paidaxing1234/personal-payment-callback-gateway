@@ -35,7 +35,7 @@ npm start
 - 健康检查：http://127.0.0.1:8787/health
 - 合规边界：http://127.0.0.1:8787/api/compliance
 
-生产环境必须设置强随机 `ADMIN_TOKEN` 和 `WEBHOOK_SECRET`，并通过 HTTPS 暴露服务。
+所有人工确认、取消和审计查询都必须设置强随机 `ADMIN_TOKEN`；生产环境还必须设置强随机 `WEBHOOK_SECRET`，并通过 HTTPS 暴露服务。
 
 ## API 摘要
 
