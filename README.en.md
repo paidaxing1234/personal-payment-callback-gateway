@@ -9,6 +9,7 @@ This is a compliance-first helper for payment bookkeeping: create orders, manual
 ## What It Does
 
 - Creates pending payment orders.
+- Provides a public `/pay/<token>` checkout page with amount, order number, and manual collection instructions.
 - Lets an administrator manually confirm a payment after independent verification.
 - Sends signed HMAC-SHA256 webhooks to a merchant system.
 - Stores payment events, webhook deliveries, and audit logs.

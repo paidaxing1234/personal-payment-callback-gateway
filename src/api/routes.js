@@ -37,6 +37,14 @@ async function sendStatic(req, res, pathname) {
   }
 }
 
+async function sendStaticFile(res, fileName) {
+  const filePath = path.resolve(PUBLIC_DIR, fileName);
+  if (!filePath.startsWith(PUBLIC_DIR)) throw new AppError(403, "forbidden", "Forbidden.");
+  const content = await fs.readFile(filePath);
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(content);
+}
+
 export function createRouter({ config, orderService }) {
   return async function route(req, res) {
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
@@ -58,6 +66,23 @@ export function createRouter({ config, orderService }) {
       });
     }
 
+    let params = getPathParams(pathname, "/api/checkout/:token");
+    if (params && req.method === "GET") {
+      return sendJson(res, 200, { order: await orderService.getCheckout(params.token) });
+    }
+
+    params = getPathParams(pathname, "/api/checkout/:token/submit");
+    if (params && req.method === "POST") {
+      const body = await readJson(req);
+      const order = await orderService.submitPayerProof(params.token, body, {
+        actorType: "payer",
+        actorId: "checkout",
+        ip: req.socket.remoteAddress || "",
+        userAgent: req.headers["user-agent"] || ""
+      });
+      return sendJson(res, 200, { order });
+    }
+
     if (req.method === "GET" && pathname === "/api/orders") {
       requireMerchant(req, config);
       return sendJson(res, 200, { orders: await orderService.listOrders() });
@@ -70,7 +95,7 @@ export function createRouter({ config, orderService }) {
       return sendJson(res, 201, { order });
     }
 
-    let params = getPathParams(pathname, "/api/orders/:id");
+    params = getPathParams(pathname, "/api/orders/:id");
     if (params && req.method === "GET") {
       requireMerchant(req, config);
       return sendJson(res, 200, { order: await orderService.getOrder(params.id) });
@@ -107,6 +132,11 @@ export function createRouter({ config, orderService }) {
     if (req.method === "GET" && pathname === "/api/webhook-deliveries") {
       requireAdmin(req, config);
       return sendJson(res, 200, { deliveries: await orderService.listDeliveries() });
+    }
+
+    params = getPathParams(pathname, "/pay/:token");
+    if (params && req.method === "GET") {
+      return sendStaticFile(res, "pay.html");
     }
 
     if (req.method === "GET" && !pathname.startsWith("/api/")) {

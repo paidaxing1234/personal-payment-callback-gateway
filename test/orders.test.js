@@ -71,6 +71,7 @@ test("creates an order and confirms it with signed webhook delivery", async () =
   assert.equal(create.response.status, 201);
   assert.equal(create.body.order.amountCents, 1234);
   assert.equal(create.body.order.status, "PENDING_PAYMENT");
+  assert.match(create.body.order.checkoutUrl, /^\/pay\/.+/);
 
   const confirm = await request(`/api/orders/${create.body.order.id}/confirm`, {
     method: "POST",
@@ -89,6 +90,43 @@ test("creates an order and confirms it with signed webhook delivery", async () =
     receivedWebhook.rawBody
   );
   assert.equal(receivedWebhook.headers["x-callback-signature"], expected);
+});
+
+test("checkout page exposes safe payment details and accepts payer submission", async () => {
+  const create = await request("/api/orders", {
+    method: "POST",
+    headers: { Authorization: "Bearer merchant-test-token" },
+    body: JSON.stringify({
+      amount: "8.88",
+      subject: "Checkout order",
+      webhookUrl,
+      metadata: { internalCustomerId: "secret-customer-id" }
+    })
+  });
+  const token = create.body.order.checkoutUrl.split("/").pop();
+
+  const checkout = await request(`/api/checkout/${token}`);
+  assert.equal(checkout.response.status, 200);
+  assert.equal(checkout.body.order.status, "PENDING_PAYMENT");
+  assert.equal(checkout.body.order.orderNo, create.body.order.orderNo);
+  assert.equal(checkout.body.order.webhookUrl, undefined);
+  assert.equal(checkout.body.order.metadata, undefined);
+  assert.equal(checkout.body.order.checkoutToken, undefined);
+  assert.equal(checkout.body.order.payment.instructions.includes("order number"), true);
+
+  const submit = await request(`/api/checkout/${token}/submit`, {
+    method: "POST",
+    body: JSON.stringify({ payerName: "Alice", payerNote: "bill tail 1234" })
+  });
+  assert.equal(submit.response.status, 200);
+  assert.equal(submit.body.order.status, "PENDING_MANUAL_REVIEW");
+  assert.equal(submit.body.order.submittedAt.length > 0, true);
+
+  const merchant = await request(`/api/orders/${create.body.order.id}`, {
+    headers: { Authorization: "Bearer merchant-test-token" }
+  });
+  assert.equal(merchant.body.order.status, "PENDING_MANUAL_REVIEW");
+  assert.equal(merchant.body.order.payerSubmission.payerNote, "bill tail 1234");
 });
 
 test("rejects private webhook URLs unless explicitly enabled", async () => {

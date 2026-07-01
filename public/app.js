@@ -69,7 +69,14 @@ function renderOrders(orders) {
     webhookUrl.className = "orderMeta";
     webhookUrl.textContent = `Webhook: ${order.webhookUrl || "未设置"}`;
 
-    orderMain.append(orderTitle, orderNo, webhookUrl);
+    const checkout = document.createElement("a");
+    checkout.className = "orderMeta";
+    checkout.href = order.checkoutUrl;
+    checkout.target = "_blank";
+    checkout.rel = "noreferrer";
+    checkout.textContent = `付款页：${order.checkoutUrl}`;
+
+    orderMain.append(orderTitle, orderNo, checkout, webhookUrl);
 
     const actions = document.createElement("div");
     actions.className = "orderActions";

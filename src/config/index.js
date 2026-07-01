@@ -34,10 +34,14 @@ export function loadConfig(env = process.env) {
     isProduction: nodeEnv === "production",
     port: Number.parseInt(env.PORT || "8787", 10),
     dataFile: path.resolve(cwd, env.DATA_FILE || "./data/store.json"),
+    publicBaseUrl: env.PUBLIC_BASE_URL || "",
     adminToken: env.ADMIN_TOKEN || "",
     merchantToken: env.MERCHANT_TOKEN || "",
     webhookSecret: env.WEBHOOK_SECRET || "development-webhook-secret",
     defaultWebhookUrl: env.DEFAULT_WEBHOOK_URL || "",
+    paymentQrImageUrl: env.PAYMENT_QR_IMAGE_URL || "",
+    paymentAccountLabel: env.PAYMENT_ACCOUNT_LABEL || "",
+    paymentInstructions: env.PAYMENT_INSTRUCTIONS || "Please pay with the configured personal collection code and include the order number in the payment note.",
     allowPrivateWebhooks: readBoolean(env.ALLOW_PRIVATE_WEBHOOKS, false),
     simulateProviderToken: env.SIMULATE_PROVIDER_TOKEN || ""
   };

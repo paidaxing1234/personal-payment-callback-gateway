@@ -27,6 +27,11 @@ input {
   font: inherit;
 }
 
+img {
+  max-width: 100%;
+  display: block;
+}
+
 button {
   min-height: 38px;
   border: 1px solid var(--primary);
@@ -175,6 +180,62 @@ label {
   overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 12px;
+}
+
+.checkoutShell {
+  max-width: 760px;
+}
+
+.checkoutPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.checkoutHeader {
+  display: grid;
+  gap: 8px;
+}
+
+.checkoutAmount {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.checkoutDetails {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.qrWrap {
+  width: min(320px, 100%);
+  min-height: 220px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #fff;
+}
+
+.qrWrap img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.qrPlaceholder {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.checkoutForm {
+  display: grid;
+  gap: 10px;
 }
 
 @media (max-width: 760px) {

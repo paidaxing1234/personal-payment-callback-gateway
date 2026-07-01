@@ -72,6 +72,33 @@ test("order list and details require admin token", async () => {
   await new Promise((resolve) => app.close(resolve));
 });
 
+test("checkout token is required for public checkout details", async () => {
+  const app = await createApp({
+    NODE_ENV: "test",
+    DATA_FILE: path.join(os.tmpdir(), `pcg-checkout-token-${Date.now()}.json`),
+    ADMIN_TOKEN: "checkout-admin-token",
+    MERCHANT_TOKEN: "checkout-merchant-token",
+    WEBHOOK_SECRET: "test-webhook-secret"
+  });
+  const baseUrl = await listen(app);
+
+  const create = await fetch(`${baseUrl}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer checkout-merchant-token" },
+    body: JSON.stringify({ amount: "1.00", subject: "Token protected checkout" })
+  });
+  const createdBody = await create.json();
+
+  const byOrderId = await fetch(`${baseUrl}/api/checkout/${createdBody.order.id}`);
+  assert.equal(byOrderId.status, 404);
+
+  const token = createdBody.order.checkoutUrl.split("/").pop();
+  const byToken = await fetch(`${baseUrl}/api/checkout/${token}`);
+  assert.equal(byToken.status, 200);
+
+  await new Promise((resolve) => app.close(resolve));
+});
+
 test("oversized JSON bodies are rejected", async () => {
   const app = await createApp({
     NODE_ENV: "test",

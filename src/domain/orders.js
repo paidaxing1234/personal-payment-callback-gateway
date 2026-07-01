@@ -1,5 +1,5 @@
 import { AppError } from "../lib/errors.js";
-import { newId, newOrderNo } from "../lib/id.js";
+import { newCheckoutToken, newId, newOrderNo } from "../lib/id.js";
 import { centsToAmount, parseAmountToCents } from "../lib/money.js";
 import { validateWebhookUrl } from "../lib/security.js";
 
@@ -12,6 +12,41 @@ function nowIso() {
 
 function publicOrder(order) {
   return { ...order };
+}
+
+function checkoutUrlFor(order, publicBaseUrl = "") {
+  if (!order.checkoutToken) return "";
+  const path = `/pay/${encodeURIComponent(order.checkoutToken)}`;
+  return publicBaseUrl ? `${publicBaseUrl.replace(/\/$/, "")}${path}` : path;
+}
+
+function merchantOrder(order, publicBaseUrl = "") {
+  return {
+    ...order,
+    checkoutUrl: checkoutUrlFor(order, publicBaseUrl)
+  };
+}
+
+function checkoutOrder(order, config) {
+  return {
+    id: order.id,
+    orderNo: order.orderNo,
+    amount: order.amount,
+    amountCents: order.amountCents,
+    currency: order.currency,
+    subject: order.subject,
+    status: order.status,
+    payerHint: order.payerHint || "",
+    checkoutUrl: checkoutUrlFor(order, config.publicBaseUrl),
+    createdAt: order.createdAt,
+    expiresAt: order.expiresAt,
+    submittedAt: order.submittedAt || null,
+    payment: {
+      accountLabel: config.paymentAccountLabel,
+      qrImageUrl: config.paymentQrImageUrl,
+      instructions: config.paymentInstructions
+    }
+  };
 }
 
 function addAudit(data, req, action, resourceType, resourceId, before, after, note = "") {
@@ -51,14 +86,21 @@ export class OrderService {
 
   async listOrders() {
     const data = await this.store.read();
-    return data.orders.map(publicOrder).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return data.orders.map((order) => merchantOrder(order, this.config.publicBaseUrl)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   async getOrder(id) {
     const data = await this.store.read();
     const order = data.orders.find((item) => item.id === id || item.orderNo === id);
     if (!order) throw new AppError(404, "order_not_found", "Order not found.");
-    return publicOrder(order);
+    return merchantOrder(order, this.config.publicBaseUrl);
+  }
+
+  async getCheckout(token) {
+    const data = await this.store.read();
+    const order = data.orders.find((item) => item.checkoutToken === token);
+    if (!order) throw new AppError(404, "checkout_not_found", "Checkout page not found.");
+    return checkoutOrder(order, this.config);
   }
 
   async createOrder(input, actor) {
@@ -72,6 +114,7 @@ export class OrderService {
     const order = {
       id: newId("ord"),
       orderNo: newOrderNo(),
+      checkoutToken: newCheckoutToken(),
       amount: centsToAmount(amountCents),
       amountCents,
       currency: "CNY",
@@ -84,6 +127,8 @@ export class OrderService {
       createdAt,
       updatedAt: createdAt,
       paidAt: null,
+      submittedAt: null,
+      payerSubmission: null,
       expiresAt: input.expiresAt || null
     };
 
@@ -91,7 +136,34 @@ export class OrderService {
       data.orders.push(order);
       addPaymentEvent(data, order, "ORDER_CREATED", "api", { amount: order.amount, subject: order.subject });
       addAudit(data, actor, "order.create", "order", order.id, null, order);
-      return publicOrder(order);
+      return merchantOrder(order, this.config.publicBaseUrl);
+    });
+  }
+
+  async submitPayerProof(token, input, actor) {
+    return this.store.update((data) => {
+      const order = data.orders.find((item) => item.checkoutToken === token);
+      if (!order) throw new AppError(404, "checkout_not_found", "Checkout page not found.");
+      if (TERMINAL_STATUSES.has(order.status) || PAID_STATUSES.has(order.status)) {
+        return checkoutOrder(order, this.config);
+      }
+      if (!["PENDING_PAYMENT", "PENDING_MANUAL_REVIEW"].includes(order.status)) {
+        throw new AppError(409, "invalid_order_state", `Cannot submit payer proof from ${order.status}.`);
+      }
+
+      const before = { ...order };
+      const submittedAt = nowIso();
+      order.status = "PENDING_MANUAL_REVIEW";
+      order.submittedAt = submittedAt;
+      order.updatedAt = submittedAt;
+      order.payerSubmission = {
+        payerName: String(input.payerName || "").slice(0, 80),
+        payerNote: String(input.payerNote || "").slice(0, 240),
+        submittedAt
+      };
+      addPaymentEvent(data, order, "PAYER_SUBMITTED_PROOF", "checkout", order.payerSubmission);
+      addAudit(data, actor, "order.payer_submit", "order", order.id, before, order, order.payerSubmission.payerNote);
+      return checkoutOrder(order, this.config);
     });
   }
 

@@ -9,6 +9,7 @@
 ## 能做什么
 
 - 创建待支付订单，并生成可展示给付款人的收款说明。
+- 提供公开付款页 `/pay/<token>`，展示金额、订单号和个人收款说明。
 - 管理员人工确认到账，系统记录审计日志。
 - 模拟 provider 通知，用于本地开发和商户 Webhook 联调。
 - 对外发送 HMAC-SHA256 签名 Webhook，支持幂等键和投递记录。
@@ -49,6 +50,8 @@ curl -X POST http://127.0.0.1:8787/api/orders \
   -H "Content-Type: application/json" \
   -d "{\"amount\":\"9.90\",\"subject\":\"测试订单\",\"webhookUrl\":\"https://example.com/webhook\"}"
 ```
+
+返回里的 `checkoutUrl` 是给付款用户打开的付款页。用户付款后在该页面点“我已付款”，订单会进入 `PENDING_MANUAL_REVIEW`，管理员确认后才会触发商户 Webhook。
 
 ### 人工确认到账
 

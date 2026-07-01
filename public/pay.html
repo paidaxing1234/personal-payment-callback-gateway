@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>订单付款</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell checkoutShell">
+      <section class="toolbar">
+        <div>
+          <h1>订单付款</h1>
+          <p>请核对金额和订单号，付款后提交待人工确认。</p>
+        </div>
+      </section>
+
+      <section class="notice">
+        这是人工核验收款页，不是支付宝官方自动回调。付款成功以后，需要收款方确认到账。
+      </section>
+
+      <section id="checkoutPanel" class="panel checkoutPanel">
+        <p class="muted">加载订单中</p>
+      </section>
+    </main>
+    <script src="/pay.js" type="module"></script>
+  </body>
+</html>
