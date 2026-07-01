@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Payment Callback Gateway</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div>
+          <h1>Payment Callback Gateway</h1>
+          <p>订单记录、人工确认、审计留痕和签名 Webhook。</p>
+        </div>
+        <button id="refreshBtn" type="button">刷新</button>
+      </section>
+
+      <section class="notice">
+        普通个人收款码没有官方异步回调；本系统不会把个人码包装成免签支付通道。
+      </section>
+
+      <section class="grid">
+        <form id="orderForm" class="panel">
+          <h2>创建订单</h2>
+          <label>
+            金额
+            <input name="amount" value="9.90" inputmode="decimal" required />
+          </label>
+          <label>
+            主题
+            <input name="subject" value="测试订单" required />
+          </label>
+          <label>
+            Webhook URL
+            <input name="webhookUrl" placeholder="https://example.com/webhook" />
+          </label>
+          <button type="submit">创建</button>
+        </form>
+
+        <form id="adminForm" class="panel">
+          <h2>管理员</h2>
+          <label>
+            Admin Token
+            <input id="adminToken" type="password" placeholder="Authorization Bearer token" />
+          </label>
+          <p class="muted">确认、取消、审计查询需要管理员 token。</p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panelHead">
+          <h2>订单</h2>
+          <span id="statusText" class="muted">等待加载</span>
+        </div>
+        <div id="orders" class="orders"></div>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

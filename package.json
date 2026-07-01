@@ -1,0 +1,24 @@
+{
+  "name": "personal-payment-callback-gateway",
+  "version": "0.1.0",
+  "description": "A compliance-first payment callback gateway for manual personal-code bookkeeping and official provider webhooks.",
+  "type": "module",
+  "private": false,
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js && node --check src/domain/orders.js && node --check src/webhook/dispatcher.js",
+    "security:scan": "node scripts/security-scan.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "payment",
+    "webhook",
+    "alipay",
+    "manual-confirmation",
+    "callback-gateway"
+  ],
+  "license": "MIT"
+}
